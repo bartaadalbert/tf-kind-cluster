@@ -20,6 +20,11 @@ resource "null_resource" "create_cluster" {
     command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${var.KIND_CLUSTER_NAME} --config -"
   }
 
+  provisioner "local-exec" {
+    when    = destroy
+    command = "kind delete cluster --name ${var.KIND_CLUSTER_NAME}"
+  }
+
 }
 
 
