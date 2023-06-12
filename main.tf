@@ -20,7 +20,7 @@ resource "null_resource" "create_cluster" {
     cluster_name = var.KIND_CLUSTER_NAME
   }
   provisioner "local-exec" {
-    command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${var.KIND_CLUSTER_NAME} --config -"
+    command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
   }
 
   provisioner "local-exec" {
