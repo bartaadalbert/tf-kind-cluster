@@ -16,13 +16,16 @@ resource "null_resource" "install_kind" {
 resource "null_resource" "create_cluster" {
   depends_on = [null_resource.install_kind]
 
+  triggers = {
+    cluster_name = var.KIND_CLUSTER_NAME
+  }
   provisioner "local-exec" {
     command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${var.KIND_CLUSTER_NAME} --config -"
   }
 
   provisioner "local-exec" {
     when    = destroy
-    command = "kind delete cluster --name ${var.KIND_CLUSTER_NAME}"
+    command = "kind delete cluster --name ${self.triggers.cluster_name}"
   }
 
 }
