@@ -46,6 +46,10 @@ resource "null_resource" "get_kubeconfig" {
 resource "null_resource" "get_clusters" {
   depends_on = [null_resource.create_cluster]
 
+  triggers = {
+    cluster_name = var.KIND_CLUSTER_NAME
+  }
+  
   provisioner "local-exec" {
     command = "kubectl get nodes --context kind-${var.KIND_CLUSTER_NAME}"
   }

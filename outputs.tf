@@ -3,18 +3,27 @@ output "kubeconfig" {
   value       = "${path.module}/kind-config"
 }
 
+output "kubeconfig" {
+  description = "The kubeconfig for the created cluster."
+  value       = "${path.module}/kind-config"
+}
+
 output "client_key" {
-  value = kind_cluster.this.client_key
+  description = "The client key for the created cluster."
+  value       = "${path.module}/kind-client-key"
 }
 
 output "ca" {
-  value = kind_cluster.this.cluster_ca_certificate
+  description = "The CA certificate for the created cluster."
+  value       = "${path.module}/kind-ca"
 }
 
 output "crt" {
-  value = kind_cluster.this.client_certificate
+  description = "The client certificate for the created cluster."
+  value       = "${path.module}/kind-crt"
 }
 
 output "endpoint" {
-  value = kind_cluster.this.endpoint
+  description = "The endpoint for the created cluster."
+  value       = kind_cluster.this.endpoint
 }
