@@ -63,7 +63,7 @@ resource "null_resource" "get_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    command = "kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint"
+    command = "kubectl cluster-info | grep 'Kubernetes master' | awk '/http/ {print $NF}' > ${path.module}/kind-endpoint"
     on_failure = continue
   }
 }
