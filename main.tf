@@ -49,6 +49,26 @@ resource "null_resource" "get_clusters" {
   provisioner "local-exec" {
     command = "kubectl get nodes --context kind-${var.KIND_CLUSTER_NAME}"
   }
+  # Store the necessary values in local-exec triggers
+  provisioner "local-exec" {
+    command = "echo ${null_resource.get_kubeconfig.triggers.client_key} > ${path.module}/kind-client-key"
+    on_failure = continue
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${null_resource.get_kubeconfig.triggers.ca} > ${path.module}/kind-ca"
+    on_failure = continue
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${null_resource.get_kubeconfig.triggers.crt} > ${path.module}/kind-crt"
+    on_failure = continue
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${null_resource.get_kubeconfig.triggers.endpoint} > ${path.module}/kind-endpoint"
+    on_failure = continue
+  }
 }
 
 resource "null_resource" "label_nodes" {
