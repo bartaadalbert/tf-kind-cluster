@@ -65,39 +65,17 @@ resource "null_resource" "get_kubeconfig" {
 #   }
 # }
 
-# resource "null_resource" "extract_kubeconfig_values" {
-#   depends_on = [null_resource.get_kubeconfig]
-
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       if [ -f "${path.module}/kind-config" ]; then
-#         KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode > ${path.module}/kind-ca &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode > ${path.module}/kind-crt &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode > ${path.module}/kind-client-key &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
-#       else
-#         echo "${path.module}/kind-config does not exist."
-#       fi
-#     EOT
-#     interpreter = ["bash", "-c"]
-#   }
-# }
-
 resource "null_resource" "extract_kubeconfig_values" {
   depends_on = [null_resource.get_kubeconfig]
 
   provisioner "local-exec" {
     command = <<-EOT
-      if ! command -v yq &> /dev/null; then
-       sudo curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq && sudo chmod +x /usr/bin/yq
-      fi
-
       if [ -f "${path.module}/kind-config" ]; then
-        KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.certificate-authority-data' | base64 --decode > ${path.module}/kind-ca &&
-        KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-certificate-data' | base64 --decode > ${path.module}/kind-crt &&
-        KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-key-data' | base64 --decode > ${path.module}/kind-client-key &&
-        KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.server' > ${path.module}/kind-endpoint
+        KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode > ${path.module}/kind-ca &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode > ${path.module}/kind-crt &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode > ${path.module}/kind-client-key &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
       else
         echo "${path.module}/kind-config does not exist."
       fi
@@ -105,6 +83,28 @@ resource "null_resource" "extract_kubeconfig_values" {
     interpreter = ["bash", "-c"]
   }
 }
+
+# resource "null_resource" "extract_kubeconfig_values" {
+#   depends_on = [null_resource.get_kubeconfig]
+
+#   provisioner "local-exec" {
+#     command = <<-EOT
+#       if ! command -v yq &> /dev/null; then
+#        sudo curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq && sudo chmod +x /usr/bin/yq
+#       fi
+
+#       if [ -f "${path.module}/kind-config" ]; then
+#         KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.certificate-authority-data' | base64 --decode > ${path.module}/kind-ca &&
+#         KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-certificate-data' | base64 --decode > ${path.module}/kind-crt &&
+#         KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-key-data' | base64 --decode > ${path.module}/kind-client-key &&
+#         KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.server' > ${path.module}/kind-endpoint
+#       else
+#         echo "${path.module}/kind-config does not exist."
+#       fi
+#     EOT
+#     interpreter = ["bash", "-c"]
+#   }
+# }
 
 
 resource "null_resource" "get_clusters" {
