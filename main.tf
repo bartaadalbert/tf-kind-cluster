@@ -60,6 +60,16 @@ resource "null_resource" "label_nodes" {
   }
 }
 
+resource "null_resource" "label_masters" {
+  depends_on = [null_resource.create_cluster]
+  count      = var.NUM_MASTERS
+
+  provisioner "local-exec" {
+    command = "kubectl label nodes ${count.index == 0 ? "${var.KIND_CLUSTER_NAME}-control-plane" : "${var.KIND_CLUSTER_NAME}-control-plane${count.index + 1}"} node-role.kubernetes.io/master="
+  }
+}
+
+
 
 
 
