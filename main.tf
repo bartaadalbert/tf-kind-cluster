@@ -20,23 +20,12 @@ resource "null_resource" "create_cluster" {
     cluster_name = var.KIND_CLUSTER_NAME
   }
   provisioner "local-exec" {
-  command = <<-EOT
-    echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -
-    echo 'Exporting KUBECONFIG...'
-    export KUBECONFIG="$(kind get kubeconfig-path --name=${self.triggers.cluster_name})"
-    echo 'Checking node readiness...'
-    until [ $(kubectl get nodes --no-headers | awk '{ print $2 }' | grep -v Ready | wc -l) -eq 0 ]; do
-      echo 'Waiting for all nodes to be ready...'
-      sleep 5
-    done
-    echo 'All nodes are ready.'
-  EOT
-  interpreter = ["bash", "-c"]
- }
+    command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
+  }
 
-  # provisioner "local-exec" {
-  #   command = "sleep ${var.SLEEP_DURATION}" 
-  # }
+  provisioner "local-exec" {
+    command = "sleep ${var.SLEEP_DURATION}" 
+  }
 
   provisioner "local-exec" {
     when    = destroy
@@ -44,7 +33,6 @@ resource "null_resource" "create_cluster" {
   }
 
 }
-
 
 resource "null_resource" "get_kubeconfig" {
   depends_on = [null_resource.create_cluster]
