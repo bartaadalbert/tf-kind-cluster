@@ -38,21 +38,14 @@ resource "null_resource" "create_cluster" {
 resource "null_resource" "get_kubeconfig" {
   depends_on = [null_resource.create_cluster]
 
-  provisioner "local-exec" {
-    command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"
-  }
-}
-
-resource "null_resource" "get_clusters" {
-  depends_on = [null_resource.create_cluster]
-
   triggers = {
     cluster_name = var.KIND_CLUSTER_NAME
   }
-  
+
   provisioner "local-exec" {
-    command = "kubectl get nodes --context kind-${var.KIND_CLUSTER_NAME}"
+    command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"
   }
+
   # Store the necessary values in local-exec triggers
   provisioner "local-exec" {
     command = "echo ${null_resource.get_kubeconfig.triggers.client_key} > ${path.module}/kind-client-key"
@@ -72,6 +65,15 @@ resource "null_resource" "get_clusters" {
   provisioner "local-exec" {
     command = "echo ${null_resource.get_kubeconfig.triggers.endpoint} > ${path.module}/kind-endpoint"
     on_failure = continue
+  }
+}
+
+resource "null_resource" "get_clusters" {
+  depends_on = [null_resource.create_cluster]
+
+  
+  provisioner "local-exec" {
+    command = "kubectl get nodes --context kind-${var.KIND_CLUSTER_NAME}"
   }
 }
 
