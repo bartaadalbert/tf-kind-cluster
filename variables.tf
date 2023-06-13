@@ -7,13 +7,13 @@ variable "KIND_CLUSTER_NAME" {
 variable "NUM_MASTERS" {
   description = "Number of master nodes."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "NUM_WORKERS" {
   description = "Number of worker nodes."
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "SLEEP_DURATION" {
