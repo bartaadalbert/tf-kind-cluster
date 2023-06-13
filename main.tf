@@ -56,9 +56,10 @@ resource "null_resource" "label_nodes" {
   count      = var.NUM_WORKERS
 
   provisioner "local-exec" {
-    command = "kubectl label nodes ${self.count.index == 0 ? "${var.KIND_CLUSTER_NAME}-worker" : "${var.KIND_CLUSTER_NAME}-worker${count.index + 1}"} node-role.kubernetes.io/worker="
+    command = "kubectl label nodes ${count.index == 0 ? "${var.KIND_CLUSTER_NAME}-worker" : "${var.KIND_CLUSTER_NAME}-worker${count.index + 1}"} node-role.kubernetes.io/worker="
   }
 }
+
 
 
 
