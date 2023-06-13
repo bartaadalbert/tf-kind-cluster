@@ -20,5 +20,5 @@ output "crt" {
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
-  value       = kind_cluster.this.endpoint
+  value       = null_resource.get_kubeconfig.*.triggers.endpoint[0]
 }
