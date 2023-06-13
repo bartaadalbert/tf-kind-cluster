@@ -20,6 +20,6 @@ output "crt" {
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
-  # value       = ""
-  value       = "${path.module}/kind-endpoint"
+  value       = "https://127.0.0.1:45141"
+  # value       = "${path.module}/kind-endpoint"
 }
