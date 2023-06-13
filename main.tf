@@ -63,7 +63,7 @@ resource "null_resource" "get_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    command = "echo ${null_resource.get_kubeconfig.triggers.endpoint} > ${path.module}/kind-endpoint"
+    command = "kubectl config view --minify --raw -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint"
     on_failure = continue
   }
 }
