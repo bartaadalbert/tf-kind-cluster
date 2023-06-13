@@ -3,11 +3,6 @@ output "kubeconfig" {
   value       = "${path.module}/kind-config"
 }
 
-output "kubeconfig" {
-  description = "The kubeconfig for the created cluster."
-  value       = "${path.module}/kind-config"
-}
-
 output "client_key" {
   description = "The client key for the created cluster."
   value       = "${path.module}/kind-client-key"
