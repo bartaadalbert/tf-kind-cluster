@@ -18,14 +18,13 @@ resource "null_resource" "create_cluster" {
 
   triggers = {
     cluster_name = var.KIND_CLUSTER_NAME
-    sleep_duration = var.SLEEP_DURATION
   }
   provisioner "local-exec" {
     command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
   }
 
   provisioner "local-exec" {
-    command = "sleep ${self.triggers.sleep_duration}" 
+    command = "sleep ${var.SLEEP_DURATION}" 
   }
 
   provisioner "local-exec" {
