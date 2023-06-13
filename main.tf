@@ -90,7 +90,7 @@ resource "null_resource" "extract_kubeconfig_values" {
   provisioner "local-exec" {
     command = <<-EOT
       if ! command -v yq &> /dev/null; then
-        curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq && chmod +x /usr/bin/yq
+       sudo curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq && sudo chmod +x /usr/bin/yq
       fi
 
       if [ -f "${path.module}/kind-config" ]; then
