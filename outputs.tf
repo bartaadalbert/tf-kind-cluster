@@ -20,5 +20,6 @@ output "crt" {
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
+  default     = ""
   value       = "${path.module}/kind-endpoint"
 }
