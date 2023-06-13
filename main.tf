@@ -53,10 +53,10 @@ resource "null_resource" "get_clusters" {
 
 resource "null_resource" "label_nodes" {
   depends_on = [null_resource.create_cluster]
-  count = var.NUM_WORKERS
-  
+  count      = var.NUM_WORKERS
+
   provisioner "local-exec" {
-    command = "kubectl label nodes ${var.KIND_CLUSTER_NAME}-worker${count.index + 1} node-role.kubernetes.io/worker="
+    command = "kubectl label nodes ${self.count.index == 0 ? "${var.KIND_CLUSTER_NAME}-worker" : "${var.KIND_CLUSTER_NAME}-worker${count.index + 1}"} node-role.kubernetes.io/worker="
   }
 }
 
