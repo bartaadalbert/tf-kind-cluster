@@ -41,18 +41,23 @@ resource "null_resource" "get_kubeconfig" {
   provisioner "local-exec" {
     command = <<-EOT
       if [ "$${TF_PHASE}" = "apply" ]; then
-        kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config &&
-        KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' > ${path.module}/kind-ca &&
-        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' > ${path.module}/kind-crt &&
-        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' > ${path.module}/kind-client-key &&
-        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
+        if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
+          kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config &&
+          KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
+          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' > ${path.module}/kind-ca &&
+          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' > ${path.module}/kind-crt &&
+          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' > ${path.module}/kind-client-key &&
+          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
+        else
+          echo "Cluster ${var.KIND_CLUSTER_NAME} does not exist."
+        fi
       fi
     EOT
     interpreter = ["bash", "-c"]
     on_failure  = continue
   }
 }
+
 
 
 
