@@ -61,6 +61,7 @@ resource "null_resource" "get_kubeconfig" {
 
 
 
+
 resource "null_resource" "get_clusters" {
   depends_on = [null_resource.create_cluster]
 
