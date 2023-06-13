@@ -21,5 +21,5 @@ output "crt" {
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
-  value       = fileexists("${path.module}/kind-endpoint") ? file("${path.module}/kind-endpoint") : "File not found"
+  value       = fileexists("${path.module}/kind-endpoint") ? file("${path.module}/kind-endpoint") : "https://127.0.0.1:45141"
 }
