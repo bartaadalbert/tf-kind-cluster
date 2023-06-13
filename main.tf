@@ -49,8 +49,11 @@ resource "null_resource" "get_kubeconfig" {
         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
       fi
     EOT
+    interpreter = ["bash", "-c"]
+    on_failure  = continue
   }
 }
+
 
 
 resource "null_resource" "get_clusters" {
