@@ -20,12 +20,23 @@ resource "null_resource" "create_cluster" {
     cluster_name = var.KIND_CLUSTER_NAME
   }
   provisioner "local-exec" {
-    command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
-  }
+  command = <<-EOT
+    echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -
+    echo 'Exporting KUBECONFIG...'
+    export KUBECONFIG="$(kind get kubeconfig-path --name=${self.triggers.cluster_name})"
+    echo 'Checking node readiness...'
+    until [ $(kubectl get nodes --no-headers | awk '{ print $2 }' | grep -v Ready | wc -l) -eq 0 ]; do
+      echo 'Waiting for all nodes to be ready...'
+      sleep 5
+    done
+    echo 'All nodes are ready.'
+  EOT
+  interpreter = ["bash", "-c"]
+ }
 
-  provisioner "local-exec" {
-    command = "sleep ${var.SLEEP_DURATION}" 
-  }
+  # provisioner "local-exec" {
+  #   command = "sleep ${var.SLEEP_DURATION}" 
+  # }
 
   provisioner "local-exec" {
     when    = destroy
@@ -40,21 +51,18 @@ resource "null_resource" "get_kubeconfig" {
 
   provisioner "local-exec" {
     command = <<-EOT
-      if [ "$${TF_PHASE}" = "apply" ]; then
-        if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
-          kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config &&
-          KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' > ${path.module}/kind-ca &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' > ${path.module}/kind-crt &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' > ${path.module}/kind-client-key &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
-        else
-          echo "Cluster ${var.KIND_CLUSTER_NAME} does not exist."
-        fi
+      if [ -f "${path.module}/kind-config" ]; then
+        kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config &&
+        KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' > ${path.module}/kind-ca &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' > ${path.module}/kind-crt &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' > ${path.module}/kind-client-key &&
+        KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
+      else
+        echo "${path.module}/kind-config does not exist."
       fi
     EOT
     interpreter = ["bash", "-c"]
-    on_failure  = continue
   }
 }
 
