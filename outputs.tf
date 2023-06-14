@@ -5,18 +5,18 @@ output "kubeconfig" {
 
 output "client_key" {
   description = "The client key for the created cluster."
-  value       = fileexists("${path.module}/kind-client-key") ? file("${path.module}/kind-client-key") : "File not found"
+  value       = fileexists("${path.module}/kind-client-key.pem") ? file("${path.module}/kind-client-key.pem") : "File not found"
   sensitive   = true
 }
 
 output "ca" {
   description = "The CA certificate for the created cluster."
-  value       = fileexists("${path.module}/kind-ca") ? file("${path.module}/kind-ca") : "File not found"
+  value       = fileexists("${path.module}/kind-ca.crt") ? file("${path.module}/kind-ca.crt") : "File not found"
 }
 
 output "crt" {
   description = "The client certificate for the created cluster."
-  value       = fileexists("${path.module}/kind-crt") ? file("${path.module}/kind-crt") : "File not found"
+  value       = fileexists("${path.module}/kind-crt.crt") ? file("${path.module}/kind-crt.crt") : "File not found"
 }
 
 output "endpoint" {

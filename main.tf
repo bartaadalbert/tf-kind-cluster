@@ -23,9 +23,9 @@ resource "null_resource" "create_cluster" {
     command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
   }
 
-  provisioner "local-exec" {
-    command = "sleep ${var.SLEEP_DURATION}" 
-  }
+  # provisioner "local-exec" {
+  #   command = "sleep ${var.SLEEP_DURATION}" 
+  # }
 
   provisioner "local-exec" {
     when    = destroy
