@@ -12,7 +12,6 @@ resource "null_resource" "install_kind" {
   }
 }
 
-
 resource "null_resource" "create_cluster" {
   depends_on = [null_resource.install_kind]
 
@@ -23,15 +22,26 @@ resource "null_resource" "create_cluster" {
     command = "echo '${jsonencode({kind = "Cluster", apiVersion = "kind.x-k8s.io/v1alpha4", nodes = local.all_nodes})}' | kind create cluster --name ${self.triggers.cluster_name} --config -"
   }
 
-  # provisioner "local-exec" {
-  #   command = "sleep ${var.SLEEP_DURATION}" 
-  # }
-
   provisioner "local-exec" {
     when    = destroy
     command = "kind delete cluster --name ${self.triggers.cluster_name}"
   }
 
+}
+
+resource "null_resource" "cluster_ready_check" {
+  count = var.WAIT_FOR_READY ? 1 : 0
+
+  depends_on = [null_resource.create_cluster]
+
+  provisioner "local-exec" {
+    command = <<-EOC
+    until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
+      echo 'Waiting for all nodes to become ready...'
+      sleep 2
+    done
+    EOC
+  }
 }
 
 resource "null_resource" "get_kubeconfig" {
@@ -41,29 +51,6 @@ resource "null_resource" "get_kubeconfig" {
     command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"
   }
 }
-
-# resource "null_resource" "extract_kubeconfig_values" {
-#   depends_on = [null_resource.get_kubeconfig]
-
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
-#         if [ -f "${path.module}/kind-config" ]; then
-#           KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-#           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' > ${path.module}/kind-ca &&
-#           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' > ${path.module}/kind-crt &&
-#           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' > ${path.module}/kind-client-key &&
-#           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
-#         else
-#           echo "${path.module}/kind-config does not exist."
-#         fi
-#       else
-#         echo "Cluster ${var.KIND_CLUSTER_NAME} does not exist."
-#       fi
-#     EOT
-#     interpreter = ["bash", "-c"]
-#   }
-# }
 
 resource "null_resource" "extract_kubeconfig_values" {
   depends_on = [null_resource.get_kubeconfig]
@@ -88,40 +75,23 @@ resource "null_resource" "extract_kubeconfig_values" {
   }
 }
 
-
-# resource "null_resource" "extract_kubeconfig_values" {
-#   depends_on = [null_resource.get_kubeconfig]
-
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       if [ -f "${path.module}/kind-config" ]; then
-#         KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode > ${path.module}/kind-ca &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode > ${path.module}/kind-crt &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode > ${path.module}/kind-client-key &&
-#         KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
-#       else
-#         echo "${path.module}/kind-config does not exist."
-#       fi
-#     EOT
-#     interpreter = ["bash", "-c"]
-#   }
-# }
-
 # resource "null_resource" "extract_kubeconfig_values" {
 #   depends_on = [null_resource.get_kubeconfig]
 
 #   provisioner "local-exec" {
 #     command = <<-EOT
 #       if ! command -v yq &> /dev/null; then
-#        sudo curl -L https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 -o /usr/bin/yq && sudo chmod +x /usr/bin/yq
+#         # Download and install yq if it's not already installed
+#         sudo wget -O /usr/bin/yq https://github.com/mikefarah/yq/releases/download/v4.34.1/yq_linux_amd64
+#         sudo chmod +x /usr/bin/yq
 #       fi
 
 #       if [ -f "${path.module}/kind-config" ]; then
-#         KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.certificate-authority-data' | base64 --decode > ${path.module}/kind-ca &&
-#         KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-certificate-data' | base64 --decode > ${path.module}/kind-crt &&
-#         KUBECONFIG=${path.module}/kind-config yq r - 'users[0].user.client-key-data' | base64 --decode > ${path.module}/kind-client-key &&
-#         KUBECONFIG=${path.module}/kind-config yq r - 'clusters[0].cluster.server' > ${path.module}/kind-endpoint
+#         # If the kind-config file exists, extract the certificate-authority-data, client-certificate-data, client-key-data and the server from it
+#         yq e '.clusters[0].cluster.certificate-authority-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-ca.crt
+#         yq e '.users[0].user.client-certificate-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-crt.crt
+#         yq e '.users[0].user.client-key-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-client-key.pem
+#         yq e '.clusters[0].cluster.server' ${path.module}/kind-config > ${path.module}/kind-endpoint
 #       else
 #         echo "${path.module}/kind-config does not exist."
 #       fi
@@ -129,7 +99,6 @@ resource "null_resource" "extract_kubeconfig_values" {
 #     interpreter = ["bash", "-c"]
 #   }
 # }
-
 
 resource "null_resource" "get_clusters" {
   depends_on = [null_resource.create_cluster]
