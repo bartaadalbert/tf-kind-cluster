@@ -67,7 +67,7 @@ resource "null_resource" "get_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    when    = "destroy"
+    when    = destroy
     command = "rm -f ${path.module}/kind-config ${path.module}/kind-ca* ${path.module}/kind-crt* ${path.module}/kind-client-key* ${path.module}/kind-endpoint"
   }
 }
