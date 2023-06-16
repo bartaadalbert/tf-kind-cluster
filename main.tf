@@ -36,13 +36,19 @@ resource "null_resource" "cluster_ready_check" {
 
   provisioner "local-exec" {
     command = <<-EOC
-    until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
-      echo 'Waiting for all nodes to become ready...'
-      sleep 2
-    done
+      until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
+        echo 'Waiting for all nodes to become ready...'
+        sleep 2
+      done
+
+      echo 'All nodes are ready. Cluster is now available.'
+
+      echo 'List of clusters:'
+      kind get clusters
     EOC
   }
 }
+
 
 resource "null_resource" "get_kubeconfig" {
   depends_on = [null_resource.create_cluster]
@@ -50,7 +56,22 @@ resource "null_resource" "get_kubeconfig" {
   provisioner "local-exec" {
     command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"
   }
+
+  provisioner "local-exec" {
+    when    = "apply"
+    command = <<-EOT
+      until [ -f "${path.module}/kind-config" ]; do
+        sleep 2
+      done
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = "destroy"
+    command = "rm -f ${path.module}/kind-config ${path.module}/kind-ca* ${path.module}/kind-crt* ${path.module}/kind-client-key* ${path.module}/kind-endpoint"
+  }
 }
+
 
 resource "null_resource" "extract_kubeconfig_values" {
   depends_on = [null_resource.get_kubeconfig]
@@ -74,31 +95,6 @@ resource "null_resource" "extract_kubeconfig_values" {
     interpreter = ["bash", "-c"]
   }
 }
-
-# resource "null_resource" "extract_kubeconfig_values" {
-#   depends_on = [null_resource.get_kubeconfig]
-
-#   provisioner "local-exec" {
-#     command = <<-EOT
-#       if ! command -v yq &> /dev/null; then
-#         # Download and install yq if it's not already installed
-#         sudo wget -O /usr/bin/yq https://github.com/mikefarah/yq/releases/download/v4.34.1/yq_linux_amd64
-#         sudo chmod +x /usr/bin/yq
-#       fi
-
-#       if [ -f "${path.module}/kind-config" ]; then
-#         # If the kind-config file exists, extract the certificate-authority-data, client-certificate-data, client-key-data and the server from it
-#         yq e '.clusters[0].cluster.certificate-authority-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-ca.crt
-#         yq e '.users[0].user.client-certificate-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-crt.crt
-#         yq e '.users[0].user.client-key-data' ${path.module}/kind-config | base64 --decode > ${path.module}/kind-client-key.pem
-#         yq e '.clusters[0].cluster.server' ${path.module}/kind-config > ${path.module}/kind-endpoint
-#       else
-#         echo "${path.module}/kind-config does not exist."
-#       fi
-#     EOT
-#     interpreter = ["bash", "-c"]
-#   }
-# }
 
 resource "null_resource" "get_clusters" {
   depends_on = [null_resource.create_cluster]
