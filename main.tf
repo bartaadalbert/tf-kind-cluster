@@ -75,7 +75,7 @@ resource "null_resource" "get_kubeconfig" {
 
 
 resource "null_resource" "extract_kubeconfig_values" {
-  depends_on = [null_resource.get_kubeconfig]
+  depends_on = [null_resource.get_kubeconfig,null_resource.cluster_ready_check]
 
   provisioner "local-exec" {
     command = <<-EOT
