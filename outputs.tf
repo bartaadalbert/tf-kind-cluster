@@ -38,3 +38,5 @@ output "endpoint" {
   description = "The endpoint"
   value       = data.local_file.endpoint.content
 }
+
+
