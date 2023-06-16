@@ -58,7 +58,7 @@ resource "null_resource" "get_kubeconfig" {
   }
 
   provisioner "local-exec" {
-    when    = "apply"
+    when    = "create"
     command = <<-EOT
       until [ -f "${path.module}/kind-config" ]; do
         sleep 2
