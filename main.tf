@@ -87,8 +87,9 @@ resource "null_resource" "extract_kubeconfig_values" {
           client_crt_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode)
           client_key_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode)
           server=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}')
+          server=$(echo $server | sed 's|https://||')
 
-          echo $cluster_ca_data > ${path.module}/kind-c.crt
+          echo $cluster_ca_data > ${path.module}/kind-ca.crt
           echo $client_crt_data > ${path.module}/kind-crt.crt
           echo $client_key_data > ${path.module}/kind-client-key.pem
           echo $server > ${path.module}/kind-endpoint
