@@ -66,13 +66,13 @@ resource "null_resource" "get_kubeconfig" {
       done
     EOT
     command = "kubectl get nodes --context kind-${var.KIND_CLUSTER_NAME}"
-    on_failure  = "echo Provisioner 'create' failed. Please check the logs for more information."
+    on_failure  = "echo Provisioner create failed. Please check the logs for more information."
   }
 
   provisioner "local-exec" {
     when    = destroy
     command = "rm -f ${path.module}/kind-config ${path.module}/kind-ca* ${path.module}/kind-crt* ${path.module}/kind-client-key* ${path.module}/kind-endpoint"
-    on_failure  = "echo Provisioner 'destroy' failed. Please check the logs for more information."
+    on_failure  = "echo Provisioner destroy failed. Please check the logs for more information."
   }
 }
 
