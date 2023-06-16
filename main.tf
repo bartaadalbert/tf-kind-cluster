@@ -83,9 +83,9 @@ resource "null_resource" "extract_kubeconfig_values" {
       if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
         if [ -f "${path.module}/kind-config" ]; then
           KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME}
-          cluster_ca_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
-          client_crt_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}')
-          client_key_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}')
+          cluster_ca_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode)
+          client_crt_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode)
+          client_key_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode)
           server=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}')
 
           echo "cluster_ca_data=$cluster_ca_data" > ${path.module}/kind-c.crt

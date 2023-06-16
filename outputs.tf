@@ -24,7 +24,7 @@ output "kubeconfig" {
 #   value       = fileexists("${path.module}/kind-endpoint") ? file("${path.module}/kind-endpoint") : "https://127.0.0.1:45141"
 # }
 data "local_file" "kind_config_values" {
-  filename = "${path.module}/kind-config-values"
+  filename = fileexists("${path.module}/kind-config-values") ? "${path.module}/kind-config-values" : null
 }
 
 output "client_key" {
