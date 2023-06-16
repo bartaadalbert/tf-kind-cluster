@@ -88,12 +88,26 @@ resource "null_resource" "extract_kubeconfig_values" {
           client_key_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode)
           server=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}')
 
-          echo "cluster_ca_data=$cluster_ca_data" > ${path.module}/kind-c.crt
-          echo "client_crt_data=$client_crt_data" > ${path.module}/kind-crt.crt
-          echo "client_key_data=$client_key_data" > ${path.module}/kind-client-key.pem
-          echo "server=$server" > ${path.module}/kind-endpoint
+          output "client_key" {
+            description = "The client key for the created cluster."
+            value       = client_key_data
+            sensitive   = true
+          }
 
-          echo "{\"cluster_ca_data\": \"$cluster_ca_data\", \"client_crt_data\": \"$client_crt_data\", \"client_key_data\": \"$client_key_data\", \"server\": \"$server\"}" > ${path.module}/kind-config-values
+          output "ca" {
+            description = "The CA certificate for the created cluster."
+            value       = cluster_ca_data
+          }
+
+          output "crt" {
+            description = "The client certificate for the created cluster."
+            value       = client_crt_data
+          }
+
+          output "endpoint" {
+            description = "The endpoint for the created cluster."
+            value       = server
+          }
         else
           echo "${path.module}/kind-config does not exist."
         fi

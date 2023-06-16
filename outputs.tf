@@ -23,28 +23,25 @@ output "kubeconfig" {
 #   description = "The endpoint for the created cluster."
 #   value       = fileexists("${path.module}/kind-endpoint") ? file("${path.module}/kind-endpoint") : "https://127.0.0.1:45141"
 # }
-data "local_file" "kind_config_values" {
-  filename = fileexists("${path.module}/kind-config-values") ? "${path.module}/kind-config-values" : null
-}
-
 output "client_key" {
   description = "The client key for the created cluster."
-  value       = try(jsondecode(data.local_file.kind_config_values.content)["client_key_data"], "Error retrieving client key")
+  value       = null_resource.extract_kubeconfig_values.client_key
   sensitive   = true
 }
 
 output "ca" {
   description = "The CA certificate for the created cluster."
-  value       = try(jsondecode(data.local_file.kind_config_values.content)["cluster_ca_data"], "Error retrieving CA certificate")
+  value       = null_resource.extract_kubeconfig_values.ca
 }
 
 output "crt" {
   description = "The client certificate for the created cluster."
-  value       = try(jsondecode(data.local_file.kind_config_values.content)["client_crt_data"], "Error retrieving client certificate")
+  value       = null_resource.extract_kubeconfig_values.crt
 }
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
-  value       = try(jsondecode(data.local_file.kind_config_values.content)["server"], "Error retrieving endpoint")
+  value       = null_resource.extract_kubeconfig_values.endpoint
 }
+
 
