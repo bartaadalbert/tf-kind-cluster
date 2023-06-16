@@ -29,21 +29,22 @@ data "local_file" "kind_config_values" {
 
 output "client_key" {
   description = "The client key for the created cluster."
-  value       = try(data.local_file.kind_config_values.content["client_key_data"], "Error retrieving client key")
+  value       = try(jsondecode(data.local_file.kind_config_values.content)["client_key_data"], "Error retrieving client key")
   sensitive   = true
 }
 
 output "ca" {
   description = "The CA certificate for the created cluster."
-  value       = try(data.local_file.kind_config_values.content["cluster_ca_data"], "Error retrieving CA certificate")
+  value       = try(jsondecode(data.local_file.kind_config_values.content)["cluster_ca_data"], "Error retrieving CA certificate")
 }
 
 output "crt" {
   description = "The client certificate for the created cluster."
-  value       = try(data.local_file.kind_config_values.content["client_crt_data"], "Error retrieving client certificate")
+  value       = try(jsondecode(data.local_file.kind_config_values.content)["client_crt_data"], "Error retrieving client certificate")
 }
 
 output "endpoint" {
   description = "The endpoint for the created cluster."
-  value       = try(data.local_file.kind_config_values.content["server"], "Error retrieving endpoint")
+  value       = try(jsondecode(data.local_file.kind_config_values.content)["server"], "Error retrieving endpoint")
 }
+

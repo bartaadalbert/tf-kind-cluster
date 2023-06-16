@@ -93,10 +93,7 @@ resource "null_resource" "extract_kubeconfig_values" {
           echo "client_key_data=$client_key_data" > ${path.module}/kind-client-key.pem
           echo "server=$server" > ${path.module}/kind-endpoint
 
-          echo "cluster_ca_data=$cluster_ca_data" > ${path.module}/kind-config-values
-          echo "client_crt_data=$client_crt_data" >> ${path.module}/kind-config-values
-          echo "client_key_data=$client_key_data" >> ${path.module}/kind-config-values
-          echo "server=$server" >> ${path.module}/kind-config-values
+          echo "{\"cluster_ca_data\": \"$cluster_ca_data\", \"client_crt_data\": \"$client_crt_data\", \"client_key_data\": \"$client_key_data\", \"server\": \"$server\"}" > ${path.module}/kind-config-values
         else
           echo "${path.module}/kind-config does not exist."
         fi
