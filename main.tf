@@ -82,11 +82,21 @@ resource "null_resource" "extract_kubeconfig_values" {
     command = <<-EOT
       if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
         if [ -f "${path.module}/kind-config" ]; then
-          KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' | base64 --decode > ${path.module}/kind-ca.crt &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode > ${path.module}/kind-crt.crt &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode > ${path.module}/kind-client-key.pem &&
-          KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint
+          KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME}
+          cluster_ca_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')
+          client_crt_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}')
+          client_key_data=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}')
+          server=$(KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}')
+
+          echo "cluster_ca_data=$cluster_ca_data" > ${path.module}/kind-c.crt
+          echo "client_crt_data=$client_crt_data" > ${path.module}/kind-crt.crt
+          echo "client_key_data=$client_key_data" > ${path.module}/kind-client-key.pem
+          echo "server=$server" > ${path.module}/kind-endpoint
+
+          echo "cluster_ca_data=$cluster_ca_data" > ${path.module}/kind-config-values
+          echo "client_crt_data=$client_crt_data" >> ${path.module}/kind-config-values
+          echo "client_key_data=$client_key_data" >> ${path.module}/kind-config-values
+          echo "server=$server" >> ${path.module}/kind-config-values
         else
           echo "${path.module}/kind-config does not exist."
         fi
@@ -97,6 +107,7 @@ resource "null_resource" "extract_kubeconfig_values" {
     interpreter = ["bash", "-c"]
   }
 }
+
 
 resource "null_resource" "get_clusters" {
   depends_on = [null_resource.create_cluster]
