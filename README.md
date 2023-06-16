@@ -51,7 +51,7 @@ Example
 Here is a more detailed example of how you can use this module in a project:
 
 Firstly, define your variables:
-```hcl
+
 variable "KIND_CLUSTER_NAME" {
   description = "The name of your KIND cluster"
   type        = string
@@ -70,7 +70,6 @@ variable "NUM_WORKERS" {
   default     = 2
 }
 
-```hcl
 module "kind_cluster" {
   source            = "github.com/bartaadalbert/tf-kind-cluster?ref=cert"
   KIND_CLUSTER_NAME = var.KIND_CLUSTER_NAME
