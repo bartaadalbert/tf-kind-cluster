@@ -23,8 +23,9 @@ resource "null_resource" "install_kind" {
       if ! command -v docker &> /dev/null; then
         echo -e "$INFO_COLOR Docker not found. Installing...$RESET_COLOR"
         if [[ "$OS" == "linux" ]]; then
-          sudo apt-get update
-          sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+          sudo apt update
+          sudo apt install -y docker.io
+          sudo usermod -aG docker $USER
         elif [[ "$OS" == "darwin" ]]; then
           brew install --cask docker
         fi
