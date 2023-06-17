@@ -5,5 +5,5 @@ data "local_file" "kubeconfig" {
 
 output "kubeconfig" {
   description = "The kubeconfig for the created cluster."
-  value       = data.local_file.kubeconfig.content
+  value       = data.local_file.kubeconfig
 }
