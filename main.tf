@@ -55,7 +55,7 @@ resource "null_resource" "cluster_ready_check" {
 }
 
 resource "null_resource" "get_kubeconfig" {
-  depends_on = [null_resource.create_cluster]
+  depends_on = [null_resource.create_cluster,null_resource.cluster_ready_check]
 
   provisioner "local-exec" {
     command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"

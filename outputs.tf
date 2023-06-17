@@ -4,6 +4,7 @@ data "local_file" "kubeconfig" {
 }
 
 output "kubeconfig" {
+  depends_on = [null_resource.get_kubeconfig]
   description = "The kubeconfig for the created cluster."
-  value       = data.local_file.kubeconfig
+  value       = "${path.module}/kind-config"
 }
