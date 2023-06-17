@@ -34,12 +34,46 @@ resource "null_resource" "create_cluster" {
 
 }
 
+resource "null_resource" "cluster_ready_check" {
+  count = var.WAIT_FOR_READY ? 1 : 0
+
+  depends_on = [null_resource.create_cluster]
+
+  provisioner "local-exec" {
+    command = <<-EOC
+      until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
+        echo 'Waiting for all nodes to become ready...'
+        sleep 2
+      done
+
+      echo 'All nodes are ready. Cluster is now available.'
+
+      echo 'List of clusters:'
+      kind get clusters
+    EOC
+  }
+}
 
 resource "null_resource" "get_kubeconfig" {
   depends_on = [null_resource.create_cluster]
 
   provisioner "local-exec" {
     command = "kind get kubeconfig --name ${var.KIND_CLUSTER_NAME} > ${path.module}/kind-config"
+  }
+
+  provisioner "local-exec" {
+    when    = create
+    command = <<-EOT
+      until [ -f "${path.module}/kind-config" ]; do
+        echo 'Waiting for kind-config be ready...'
+        sleep 2
+      done
+    EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "rm -f ${path.module}/kind-config"
   }
 }
 

@@ -19,5 +19,11 @@ variable "NUM_WORKERS" {
 variable "SLEEP_DURATION" {
   description = "The duration to sleep after creating the cluster"
   type        = number
-  default     = 10
+  default     = 0
+}
+
+variable "WAIT_FOR_READY" {
+  description = "Whether to wait for the cluster to be ready before continuing"
+  type        = bool
+  default     = true
 }
