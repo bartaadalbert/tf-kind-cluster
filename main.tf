@@ -1,21 +1,27 @@
 resource "null_resource" "install_kind" {
   provisioner "local-exec" {
-    command      = <<-EOT
+    command = <<EOT
+      # Define color variables
+      SUCCESS_COLOR="\e[32m"
+      INFO_COLOR="\e[36m"
+      ERROR_COLOR="\e[31m"
+      RESET_COLOR="\e[0m"
+
       # Detect the OS and architecture
       OS=$(uname | tr '[:upper:]' '[:lower:]')
       ARCH=$(uname -m)
 
-      echo "Operating system detected: $OS"
-      echo "Architecture detected: $ARCH"
+      echo -e "$INFO_COLOR Operating system detected:$RESET_COLOR $SUCCESS_COLOR $OS$RESET_COLOR"
+      echo -e "$INFO_COLOR Architecture detected:$RESET_COLOR $SUCCESS_COLOR $ARCH$RESET_COLOR"
 
       if [[ "$OS" == "windows"* ]]; then
-        echo "This script does not support Windows. Please install Docker and Kind manually."
+        echo -e "$ERROR_COLOR This script does not support Windows. Please install Docker and Kind manually.$RESET_COLOR"
         exit 1
       fi
 
       # Check for Docker installation
       if ! command -v docker &> /dev/null; then
-        echo "Docker not found. Installing..."
+        echo -e "$INFO_COLOR Docker not found. Installing...$RESET_COLOR"
         if [[ "$OS" == "linux" ]]; then
           sudo apt-get update
           sudo apt-get install -y docker-ce docker-ce-cli containerd.io
@@ -23,28 +29,28 @@ resource "null_resource" "install_kind" {
           brew install --cask docker
         fi
       else
-        echo "Docker is installed."
+        echo -e "$SUCCESS_COLOR Docker is installed.$RESET_COLOR"
       fi
 
       # Check for Kind installation
       if ! command -v kind &> /dev/null; then
-        echo "Kind not found. Installing..."
+        echo -e "$INFO_COLOR Kind not found. Installing...$RESET_COLOR"
         if [[ "$ARCH" == "x86_64" ]]; then
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-amd64
         elif [[ "$ARCH" == "aarch64" ]]; then
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-arm64
         else
-          echo "Unsupported architecture. Please install Kind manually."
+          echo -e "$ERROR_COLOR Unsupported architecture. Please install Kind manually.$RESET_COLOR"
           exit 1
         fi
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin/kind
       else
-        echo "Kind is installed."
+        echo -e "$SUCCESS_COLOR Kind is installed.$RESET_COLOR"
       fi
     EOT
-    interpreter  = ["bash", "-c"]
-    on_failure   = continue
+    interpreter = ["bash", "-c"]
+    on_failure  = continue
   }
 }
 
@@ -72,17 +78,23 @@ resource "null_resource" "cluster_ready_check" {
   depends_on = [null_resource.create_cluster]
 
   provisioner "local-exec" {
-    command = <<-EOC
+    command = <<-EOT
+
+      # Define color variables
+      SUCCESS_COLOR="\e[32m"
+      INFO_COLOR="\e[36m"
+      ERROR_COLOR="\e[31m"
+      RESET_COLOR="\e[0m"
+
       until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
         echo 'Waiting for all nodes to become ready...'
         sleep 2
       done
+      echo -e "$SUCCESS_COLOR All nodes are ready. Cluster is now available. $RESET_COLOR"
 
-      echo 'All nodes are ready. Cluster is now available.'
-
-      echo 'List of clusters:'
+      echo -e "$INFO_COLOR List of clusters: $RESET_COLOR" 
       kind get clusters
-    EOC
+    EOT
   }
 }
 
@@ -97,10 +109,16 @@ resource "null_resource" "get_kubeconfig" {
   provisioner "local-exec" {
     when    = create
     command = <<-EOT
+      # Define color variables
+      SUCCESS_COLOR="\e[32m"
+      INFO_COLOR="\e[36m"
+      RESET_COLOR="\e[0m"
+
       until [ -f "${path.module}/kind-config" ]; do
-        echo 'Waiting for kind-config be ready...'
+        echo -e "$INFO_COLOR Waiting for kind-config be ready...$RESET_COLOR"
         sleep 2
       done
+      echo -e "$SUCCESS_COLOR kind-config is ready...$RESET_COLOR"
     EOT
   }
 
@@ -116,6 +134,11 @@ resource "null_resource" "extract_kubeconfig_values" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      # Define color variables
+      SUCCESS_COLOR="\e[32m"
+      ERROR_COLOR="\e[31m"
+      RESET_COLOR="\e[0m"
+
       if kind get clusters | grep -q "${var.KIND_CLUSTER_NAME}"; then
         if [ -f "${path.module}/kind-config" ]; then
           KUBECONFIG=${path.module}/kind-config kubectl config use-context kind-${var.KIND_CLUSTER_NAME} &&
@@ -123,12 +146,12 @@ resource "null_resource" "extract_kubeconfig_values" {
           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-certificate-data}' | base64 --decode > ${path.module}/kind-crt.crt &&
           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.users[0].user.client-key-data}' | base64 --decode > ${path.module}/kind-client-key.pem &&
           KUBECONFIG=${path.module}/kind-config kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[0].cluster.server}' > ${path.module}/kind-endpoint &&
-          echo "!!!!!!!! --------- Kubeconfig files copied and values retrieved successfully --------- !!!!!!!!."
+          echo -e "$SUCCESS_COLOR !!!!!!!! --------- Kubeconfig files copied and values retrieved successfully --------- !!!!!!!!.$RESET_COLOR"
         else
-          echo "${path.module}/kind-config does not exist."
+          echo -e "$ERROR_COLOR ${path.module}/kind-config does not exist.$RESET_COLOR"
         fi
       else
-        echo "Cluster ${var.KIND_CLUSTER_NAME} does not exist."
+        echo -e "$ERROR_COLOR Cluster ${var.KIND_CLUSTER_NAME} does not exist.$RESET_COLOR"
       fi
     EOT
     interpreter = ["bash", "-c"]
