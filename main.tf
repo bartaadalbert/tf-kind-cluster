@@ -34,6 +34,28 @@ resource "null_resource" "install_kind" {
         echo -e "$SUCCESS_COLOR Docker is installed.$RESET_COLOR"
       fi
 
+      # Check for Kubectl installation
+      if ! command -v kubectl &> /dev/null; then
+        echo -e "$INFO_COLOR Kubectl not found. Installing...$RESET_COLOR"
+        if [[ "$OS" == "linux" ]]; then
+          if [[ "$ARCH" == "x86_64" ]]; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          elif [[ "$ARCH" == "aarch64" ]]; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+          fi
+        elif [[ "$OS" == "darwin" ]]; then
+          if [[ "$ARCH" == "x86_64" ]]; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/amd64/kubectl"
+          elif [[ "$ARCH" == "aarch64" ]]; then
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/darwin/arm64/kubectl"
+          fi
+        fi
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
+      else
+        echo -e "$SUCCESS_COLOR Kubectl is installed.$RESET_COLOR"
+      fi
+
       # Check for Kind installation
       if ! command -v kind &> /dev/null; then
         echo -e "$INFO_COLOR Kind not found. Installing...$RESET_COLOR"
