@@ -91,7 +91,7 @@ resource "null_resource" "cluster_ready_check" {
       RESET_COLOR="\e[0m"
 
       until [ $(kubectl get nodes --no-headers --context kind-${var.KIND_CLUSTER_NAME} | grep -v ' Ready ' | wc -l) -eq 0 ]; do 
-        echo 'Waiting for all nodes to become ready...'
+        echo -e "$INFO_COLOR Waiting for all nodes to become ready... $RESET_COLOR" 
         sleep 2
       done
       echo -e "$SUCCESS_COLOR All nodes are ready. Cluster is now available. $RESET_COLOR"
