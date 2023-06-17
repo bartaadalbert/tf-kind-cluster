@@ -1,16 +1,53 @@
 resource "null_resource" "install_kind" {
   provisioner "local-exec" {
     command      = <<-EOT
+      # Detect the OS and architecture
+      OS=$(uname | tr '[:upper:]' '[:lower:]')
+      ARCH=$(uname -m)
+
+      echo "Operating system detected: $OS"
+      echo "Architecture detected: $ARCH"
+
+      if [[ "$OS" == "windows"* ]]; then
+        echo "This script does not support Windows. Please install Docker and Kind manually."
+        exit 1
+      fi
+
+      # Check for Docker installation
+      if ! command -v docker &> /dev/null; then
+        echo "Docker not found. Installing..."
+        if [[ "$OS" == "linux" ]]; then
+          sudo apt-get update
+          sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+        elif [[ "$OS" == "darwin" ]]; then
+          brew install --cask docker
+        fi
+      else
+        echo "Docker is installed."
+      fi
+
+      # Check for Kind installation
       if ! command -v kind &> /dev/null; then
-        curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
+        echo "Kind not found. Installing..."
+        if [[ "$ARCH" == "x86_64" ]]; then
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-amd64
+        elif [[ "$ARCH" == "aarch64" ]]; then
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-arm64
+        else
+          echo "Unsupported architecture. Please install Kind manually."
+          exit 1
+        fi
         chmod +x ./kind
         sudo mv ./kind /usr/local/bin/kind
+      else
+        echo "Kind is installed."
       fi
     EOT
     interpreter  = ["bash", "-c"]
     on_failure   = continue
   }
 }
+
 
 
 resource "null_resource" "create_cluster" {
