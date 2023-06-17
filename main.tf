@@ -26,6 +26,7 @@ resource "null_resource" "install_kind" {
           sudo apt update
           sudo apt install -y docker.io
           sudo usermod -aG docker $USER
+          sudo systemctl restart docker
         elif [[ "$OS" == "darwin" ]]; then
           brew install --cask docker
         fi
@@ -51,7 +52,7 @@ resource "null_resource" "install_kind" {
       fi
     EOT
     interpreter = ["bash", "-c"]
-    on_failure  = continue
+    on_failure  = fail
   }
 }
 
