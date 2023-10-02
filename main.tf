@@ -60,9 +60,9 @@ resource "null_resource" "install_kind" {
       if ! command -v kind &> /dev/null; then
         echo -e "$INFO_COLOR Kind not found. Installing...$RESET_COLOR"
         if [[ "$ARCH" == "x86_64" ]]; then
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-amd64
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-$OS-amd64
         elif [[ "$ARCH" == "aarch64" ]]; then
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-$OS-arm64
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-$OS-arm64
         else
           echo -e "$ERROR_COLOR Unsupported architecture. Please install Kind manually.$RESET_COLOR"
           exit 1
