@@ -59,16 +59,18 @@ resource "null_resource" "install_kind" {
       # Check for Kind installation
       if ! command -v kind &> /dev/null; then
         echo -e "$INFO_COLOR Kind not found. Installing...$RESET_COLOR"
+        LATEST_KIND_VERSION=$(curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | grep -Eo '"tag_name": "[^"]+"' | cut -d'"' -f4)
         if [[ "$ARCH" == "x86_64" ]]; then
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-$OS-amd64
+          curl -L -o /usr/local/bin/kind \
+          "https://github.com/kubernetes-sigs/kind/releases/download/$LATEST_KIND_VERSION/kind-$OS-amd64"
         elif [[ "$ARCH" == "aarch64" ]]; then
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-$OS-arm64
+          curl -L -o /usr/local/bin/kind \
+          "https://github.com/kubernetes-sigs/kind/releases/download/$LATEST_KIND_VERSION/kind-$OS-arm64"
         else
           echo -e "$ERROR_COLOR Unsupported architecture. Please install Kind manually.$RESET_COLOR"
           exit 1
         fi
-        chmod +x ./kind
-        sudo mv ./kind /usr/local/bin/kind
+        chmod +x /usr/local/bin/kind
       else
         echo -e "$SUCCESS_COLOR Kind is installed.$RESET_COLOR"
       fi
